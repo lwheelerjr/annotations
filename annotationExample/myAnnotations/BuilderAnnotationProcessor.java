@@ -24,12 +24,13 @@
 
           for (Element e : roundEnv.getElementsAnnotatedWith(t))
           {
+             String excludedFields = ((Builder)e.getAnnotation(Builder.class)).exclude().toString();
 
              for (Element field : e.getEnclosedElements()) {
 
                   if(field.getKind() == ElementKind.FIELD 
                       && field.getAnnotation(Exclude.class) == null 
-                        && !((Builder)e.getAnnotation(Builder.class)).exclude().toString().toUpperCase().contains(field.getSimpleName().toString().toUpperCase())) {
+                        && !excludedFields.contains(field.getSimpleName().toString())) {
                    
                    String fname = field.getSimpleName().toString();
                    fields.put(fname, field.asType().toString());

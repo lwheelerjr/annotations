@@ -2,7 +2,7 @@ package myClasses;
 
 import myAnnotations.*;
 
-@Builder(exclude = "tax")
+@Builder(exclude = "ta")
 public class Item {
 	
 	int id;
