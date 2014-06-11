@@ -6,7 +6,6 @@ import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 import java.lang.annotation.*;
-import java.io.*;
 
 /**
  * Custom implementation of a ClassLoader.
@@ -23,9 +22,7 @@ public class CustomClassLoader extends ClassLoader {
 
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
-        Class clazz = null;
-
-        clazz = super.loadClass(name);
+        Class clazz = super.loadClass(name);
 
         if (clazz.getPackage().getName().equals("test") && !clazz.isAnnotation() && !clazz.isInterface()) { 
             clazz = injectLoggingAroundMethods(clazz);   
