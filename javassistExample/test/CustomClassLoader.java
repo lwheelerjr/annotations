@@ -7,15 +7,14 @@ import javassist.CtMethod;
 import javassist.NotFoundException;
 import java.lang.annotation.*;
 import java.io.*;
+
 /**
  * Custom implementation of a ClassLoader.
- * For any of classes from the "test" package
- * it will use javassist to load and process the class. 
+ * For any classes from the "test" package
+ * it will look for LogIt annotations and use javassist to inject code. 
  * For any other class it will use the super.loadClass() method
- * from ClassLoader, which will eventually pass the
- * request to the parent.
- *
  */
+
 public class CustomClassLoader extends ClassLoader {
 
     public CustomClassLoader(ClassLoader parent) {
@@ -25,10 +24,10 @@ public class CustomClassLoader extends ClassLoader {
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         Class clazz = null;
-        //System.out.println("loading class '" + name + "'");
+
         clazz = super.loadClass(name);
 
-        if (clazz.getPackage().getName().equals("test") && !clazz.isAnnotation() && !clazz.isInterface()) { //name.startsWith("test.")) { // && !name.contains("LogIt")) {        
+        if (clazz.getPackage().getName().equals("test") && !clazz.isAnnotation() && !clazz.isInterface()) { 
             clazz = injectLoggingAroundMethods(clazz);   
         }
         return clazz;
