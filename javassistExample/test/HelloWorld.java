@@ -8,7 +8,7 @@ public class HelloWorld {
         System.out.println("Hello "+name);
     }
 
-	@LogIt(prefix = "Now Ending, ")
+	@LogIt(prefix = "PFX")
     public void sayGoodbye(String name) {
     	delay(10);
         System.out.println("Goodbye "+name);

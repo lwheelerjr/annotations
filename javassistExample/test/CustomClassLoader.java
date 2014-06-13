@@ -9,9 +9,7 @@ import java.lang.annotation.*;
 
 /**
  * Custom implementation of a ClassLoader.
- * For any classes from the "test" package
- * it will look for LogIt annotations and use javassist to inject code. 
- * For any other class it will use the super.loadClass() method
+ * For any classes from the "test" package it will look for LogIt annotations and use javassist to inject some code. 
  */
 
 public class CustomClassLoader extends ClassLoader {
@@ -24,11 +22,11 @@ public class CustomClassLoader extends ClassLoader {
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         Class clazz = super.loadClass(name);
         if (clazz.getPackage().getName().equals("test") && !clazz.isAnnotation() && !clazz.isInterface()) { 
+            System.out.println("Loaded Class: " + clazz.getName() );
             clazz = injectLoggingAroundMethods(clazz);   
         }
         return clazz;
     }
-
 
     private Class injectLoggingAroundMethods(Class clazz) {
         try {
@@ -39,12 +37,13 @@ public class CustomClassLoader extends ClassLoader {
                 Object annotation = method.getAnnotation(LogIt.class);
 
                 if(annotation instanceof LogIt) {
+                    System.out.println("Found LogIt annotation: " + ctClazz.getName() + "." + method.getName() + ", injecting code!");
                     String prefix = ((LogIt)annotation).prefix();
                     method.addLocalVariable("startTime", CtClass.longType);                    
                     method.insertBefore("{ startTime = System.currentTimeMillis(); " + 
                                         "  System.out.println(\"" + prefix + "Entering Method: " + method.getName() + " \"); }");
                     method.insertAfter(" { System.out.println(\"" + prefix + "Exiting Method: " + method.getName() + 
-                                       " ,Elapsed Time: \" + (System.currentTimeMillis() - startTime) +  \" millis\"); }");
+                                       ", Elapsed Time: \" + (System.currentTimeMillis() - startTime) +  \" millis\"); }");
                 }
             }
             return ctClazz.toClass();                
