@@ -2,7 +2,7 @@ package myClasses;
 
 import myAnnotations.*;
 
-@Builder(exclude = "ta")
+@Builder(exclude = "tax")
 public class Item {
 	
 	int id;
@@ -11,7 +11,6 @@ public class Item {
 
 	String description;
 
-	@Exclude
 	Integer type;
 
 	Double tax;

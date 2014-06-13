@@ -16,36 +16,31 @@
  public class BuilderAnnotationProcessor extends AbstractProcessor
  {
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv)
-    {
-       for (TypeElement t : annotations)
-       {
-          Map<String, String> fields = new LinkedHashMap<>();
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+       for (TypeElement t : annotations) {        
+          for (Element classElement : roundEnv.getElementsAnnotatedWith(t)) {             
+             if (classElement.getKind() == ElementKind.CLASS) {
 
-          for (Element e : roundEnv.getElementsAnnotatedWith(t))
-          {
-             String excludedFields = ((Builder)e.getAnnotation(Builder.class)).exclude().toString();
+               String excludedFields = ((Builder)classElement.getAnnotation(Builder.class)).exclude().toString();
+               Map<String, String> fields = new LinkedHashMap<>();
+               
+               for (Element fieldElement : classElement.getEnclosedElements()) {
+                    if(fieldElement.getKind() == ElementKind.FIELD 
+                          && !excludedFields.contains(fieldElement.getSimpleName().toString())) {                     
+                     String fieldName = fieldElement.getSimpleName().toString();
+                     fields.put(fieldName, fieldElement.asType().toString());
+                   }
+                }
 
-             for (Element field : e.getEnclosedElements()) {
-
-                  if(field.getKind() == ElementKind.FIELD 
-                      && field.getAnnotation(Exclude.class) == null 
-                        && !excludedFields.contains(field.getSimpleName().toString())) {
-                   
-                   String fname = field.getSimpleName().toString();
-                   fields.put(fname, field.asType().toString());
-                 }
-              }
-
-              try {
-                writeBuilderInfoFile(e ,fields);
-              }
-              catch (IOException ioe)
-              {
-                ioe.printStackTrace();
-              }   
+                try {
+                  writeBuilderInfoFile(classElement ,fields);
+                }
+                catch (IOException ioe)
+                {
+                  ioe.printStackTrace();
+                } 
+            }  
         }
-
       }
       return true;
    }
@@ -58,48 +53,36 @@
    private void writeBuilderInfoFile(Element element, Map<String, String> fields)
       throws IOException
    {
+      String packageName = ((PackageElement)element.getEnclosingElement()).getQualifiedName().toString();
       String pojoQualifiedName = ((TypeElement) element).getQualifiedName().toString();
-      int i = pojoQualifiedName.lastIndexOf(".");
-      String pojoClassName = pojoQualifiedName.substring(i + 1);
+      String pojoClassName = pojoQualifiedName.substring(pojoQualifiedName.lastIndexOf(".") + 1);
       String builderName = pojoClassName + "Builder";
 
-      JavaFileObject sourceFile = processingEnv.getFiler().createSourceFile(
-         pojoQualifiedName.substring(0, i) + "." + builderName, element);
+      JavaFileObject sourceFile = processingEnv.getFiler().createSourceFile(packageName + "." + builderName, element);
       PrintWriter out = new PrintWriter(sourceFile.openWriter());                 
       
-      if (i > 0)
-      {
-         out.print("package ");
-         out.print(pojoQualifiedName.substring(0, i));
-         out.println(";\n");
-      }
-      
-      out.println("import javax.annotation.Generated;\n");
-      
+      out.println("package " + packageName + ";\n");               
+      out.println("import javax.annotation.Generated;\n");      
       out.println("@Generated(value=\"myAnnotations.BuilderAnnotationProcessor\")\n");
-
       out.print("public class ");
       out.println(builderName);
       out.println("{\n"); 
-
       out.println("   " + pojoClassName  + " pojo = new " + pojoClassName + "();\n" );  // write pojo instance variable declaration
 
-      for (Map.Entry<String, String> e : fields.entrySet())  // write with...() methods for each field
+      for (Map.Entry<String, String> field : fields.entrySet())  // write with...() methods for each field
       {
-         String name = e.getKey();
-         String capName = e.getKey().toUpperCase().substring(0,1) + e.getKey().substring(1);
-         String type = e.getValue();
-
-         out.println("   public " + builderName + " with" + capName + "( " + type + " value) {");
-         out.println("      pojo." + name + " = value;");
+         String fieldName = field.getKey();
+         String fieldNameCapd = Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+         String fieldType = field.getValue();
+         out.println("   public " + builderName + " with" + fieldNameCapd + "( " + fieldType + " value) {");
+         out.println("      pojo." + fieldName + " = value;");
          out.println("      return this;");
          out.println("   }\n");         
       }
 
-     out.println("   public " + pojoQualifiedName.substring(i + 1) + " build() {");  // write build() method
+     out.println("   public " + pojoClassName + " build() {");  // write build() method
      out.println("      return pojo;");
-     out.println("   }\n");
-     
+     out.println("   }\n");     
      out.println("}");
      out.close();
   }
