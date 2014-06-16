@@ -17,9 +17,11 @@
  {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-       for (TypeElement t : annotations) {        
+       for (TypeElement t : annotations) {      
           for (Element classElement : roundEnv.getElementsAnnotatedWith(t)) {             
              if (classElement.getKind() == ElementKind.CLASS) {
+
+               System.out.println("Found Annotation: " + t.getQualifiedName() + " on Class: " + classElement.getSimpleName());
 
                String excludedFields = ((Builder)classElement.getAnnotation(Builder.class)).exclude().toString();
                Map<String, String> fields = new LinkedHashMap<>();
@@ -29,6 +31,7 @@
                           && !excludedFields.contains(fieldElement.getSimpleName().toString())) {                     
                      String fieldName = fieldElement.getSimpleName().toString();
                      fields.put(fieldName, fieldElement.asType().toString());
+                     System.out.println("adding field: " + fieldElement.getSimpleName());
                    }
                 }
 
